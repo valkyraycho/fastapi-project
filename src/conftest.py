@@ -1,6 +1,8 @@
-from collections.abc import AsyncGenerator
+import asyncio
+from collections.abc import AsyncGenerator, Generator
 
 import pytest
+import pytest_asyncio
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -24,27 +26,24 @@ async def get_test_session() -> AsyncGenerator[AsyncSession]:
         yield session
 
 
-@pytest.fixture
-def anyio_backend() -> str:
-    return "asyncio"
-
-
-@pytest.fixture(autouse=True)
+@pytest_asyncio.fixture(autouse=True, scope="session")
 async def test_db() -> AsyncGenerator[None]:
-    async def init_db() -> None:
-        async with async_engine.begin() as conn:
-            await conn.run_sync(SQLModel.metadata.create_all)
+    async with async_engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
 
-    async def drop_db() -> None:
-        async with async_engine.begin() as conn:
-            await conn.run_sync(SQLModel.metadata.drop_all)
-
-    await init_db()
     yield
-    await drop_db()
+    async with async_engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.drop_all)
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True, scope="session")
+def event_loop() -> Generator[asyncio.AbstractEventLoop]:
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest_asyncio.fixture(scope="session", autouse=False)
 async def test_async_client() -> AsyncGenerator[AsyncClient, None]:
     app.dependency_overrides[get_session] = get_test_session
     async with AsyncClient(app=app, base_url="http://test") as client:
