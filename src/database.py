@@ -21,12 +21,14 @@ async def init_db() -> None:
         await conn.run_sync(SQLModel.metadata.create_all)
 
 
+async def drop_db() -> None:
+    async with async_engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.drop_all)
+
+
 async def get_session() -> AsyncGenerator[AsyncSession]:
     async with async_session() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
+        yield session
 
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
