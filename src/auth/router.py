@@ -69,7 +69,7 @@ async def login(
     user: UserLogin, session: SessionDep, service: AuthServiceDep
 ) -> JSONResponse:
     existing_user = await service.get_user(user.email, session)
-    verify_password(user.password, existing_user.password)
+    verify_password(user.password, eval(existing_user.password))
 
     user_data = {
         "email": existing_user.email,

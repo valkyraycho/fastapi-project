@@ -26,7 +26,7 @@ class AuthService:
 
     async def create_user(self, user: UserCreate, session: AsyncSession) -> User:
         user_create = User(**user.model_dump())
-        user_create.password = generate_password_hash(user_create.password)
+        user_create.password = str(generate_password_hash(user_create.password))
         user_create.role = "user"
         user_create.books = []
         user_create.reviews = []

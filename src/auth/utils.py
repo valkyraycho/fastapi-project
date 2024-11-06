@@ -2,25 +2,24 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
+import bcrypt
 import jwt
 from fastapi import HTTPException, status
 from itsdangerous import URLSafeTimedSerializer
 from itsdangerous.exc import BadData
-from passlib.context import CryptContext
 
 from src.config import Config
 
-password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ACCESS_TOKEN_EXPIRY = 3600  # seconds
 REFRESH_TOKEN_EXPIRY = 1  # day
 
 
-def generate_password_hash(password: str) -> str:
-    return password_context.hash(password)
+def generate_password_hash(password: str) -> bytes:
+    return bcrypt.hashpw(password.encode("utf-8"), salt=bcrypt.gensalt())
 
 
-def verify_password(password: str, password_hash: str) -> None:
-    if not password_context.verify(password, hash=password_hash):
+def verify_password(password: str, password_hash: bytes) -> None:
+    if not bcrypt.checkpw(password.encode("utf-8"), password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
