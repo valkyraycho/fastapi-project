@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     DATABASE_URL: str = ""
+    DATABASE_TEST_URL: str = ""
     JWT_SECRET: str = ""  # generate with `openssl rand -hex 32``
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
@@ -15,6 +16,7 @@ class Settings(BaseSettings):
     MAIL_FROM_NAME: str = ""
 
     DOMAIN: str = ""
+    TESTING: bool = False
 
 
 Config = Settings()
