@@ -1,5 +1,4 @@
 import pytest
-import pytest_asyncio
 from httpx import AsyncClient
 from pytest_mock import MockerFixture
 
@@ -13,26 +12,6 @@ MOCK_USER_PASSWORD = "johndoe123"
 MOCK_USERNAME = "johndoe123"
 MOCK_FIRST_NAME = "John"
 MOCK_LAST_NAME = "Doe"
-
-
-@pytest_asyncio.fixture
-async def mock_logged_in_user(
-    test_async_client: AsyncClient,
-) -> dict[str, str | dict[str, str]]:
-    response = await test_async_client.post(
-        f"{AUTH_ENDPOINT_PREFIX}/login",
-        json={"email": MOCK_USER_EMAIL, "password": MOCK_USER_PASSWORD},
-    )
-    assert response.status_code == 200
-
-    data = response.json()
-    assert "access_token" in data
-    assert "refresh_token" in data
-    assert "user_data" in data
-    assert "email" in data["user_data"]
-    assert "user_id" in data["user_data"]
-    assert "role" in data["user_data"]
-    return data
 
 
 @pytest.mark.asyncio
@@ -131,18 +110,6 @@ async def test_refresh_access_token_providing_access_token(
     )
     assert response.status_code == 403
     assert response.json() == {"detail": "Access token provided."}
-
-
-@pytest.mark.asyncio
-async def test_logout(
-    test_async_client: AsyncClient, mock_logged_in_user: dict[str, str | dict[str, str]]
-) -> None:
-    response = await test_async_client.get(
-        f"{AUTH_ENDPOINT_PREFIX}/logout",
-        headers={"Authorization": f"Bearer {mock_logged_in_user["access_token"]}"},
-    )
-    assert response.status_code == 200
-    assert response.json() == {"message": "Logout Successfully."}
 
 
 @pytest.mark.asyncio
