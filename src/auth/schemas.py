@@ -17,6 +17,12 @@ class UserCreate(UserBase):
 class UserLogin(UserBase): ...
 
 
+class UserLoginResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    user_data: dict[str, str]
+
+
 class UserPublic(UserCreate, Identifier):
     role: str
     is_verified: bool = False

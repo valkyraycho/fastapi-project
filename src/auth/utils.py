@@ -20,7 +20,9 @@ def generate_password_hash(password: str) -> bytes:
 
 def verify_password(password: str, password_hash: bytes) -> None:
     if not bcrypt.checkpw(password.encode("utf-8"), password_hash):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect password"
+        )
 
 
 def create_token(

@@ -17,6 +17,7 @@ from .schemas import (
     PasswordResetRequest,
     UserCreate,
     UserLogin,
+    UserLoginResponse,
     UserPublicWithBooksAndReviews,
 )
 from .service import AuthServiceDep
@@ -64,10 +65,10 @@ async def verify_user_account(
     return JSONResponse(content={"message": "Account verified successfully."})
 
 
-@router.post("/login")
+@router.post("/login", response_model=UserLoginResponse)
 async def login(
     user: UserLogin, session: SessionDep, service: AuthServiceDep
-) -> JSONResponse:
+) -> UserLoginResponse:
     existing_user = await service.get_user(user.email, session)
     verify_password(user.password, eval(existing_user.password))
 
@@ -79,12 +80,8 @@ async def login(
     access_token = create_token(user_data=user_data)
     refresh_token = create_token(user_data=user_data, refresh=True)
 
-    return JSONResponse(
-        content={
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "user": user_data,
-        }
+    return UserLoginResponse(
+        access_token=access_token, refresh_token=refresh_token, user_data=user_data
     )
 
 
@@ -135,6 +132,8 @@ async def reset_password(
     if not (email := decode_url_safe_token(url_safe_token).get("email")):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     await service.update_user(
-        email, {"password": generate_password_hash(passwords.new_password)}, session
+        email,
+        {"password": str(generate_password_hash(passwords.new_password))},
+        session,
     )
-    return JSONResponse(content={"message": "Account verified successfully."})
+    return JSONResponse(content={"message": "Password reset successfully."})
